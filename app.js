@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const { hashSync } = require('bcryptjs');
 
 const Event = require('./models/event');
 const User = require('./models/user');
@@ -66,59 +66,38 @@ app.use(
             throw err;
           });
       },
-      createEvent: ({ eventInput }) => {
-        const event = new Event({
-          title: eventInput.title,
-          description: eventInput.description,
-          price: +eventInput.price,
-          date: new Date(eventInput.date),
-          creator: '603f0e6e5d79831735dfa1f5'
-        });
-        let createdEvent;
-        return event
-          .save()
-          .then((result) => {
-            createdEvent = result;
-            return User.findById('603f0e6e5d79831735dfa1f5');
-          })
-          .then(user => {
-            if (!user) {
-              throw new Error('User not found.');
-            }
-            user.createdEvents.push(event);
-            return user.save();
-          })
-          .then(result => {
-            return createdEvent;
-          })
-          .catch((err) => {
-            console.log(err);
-            throw err;
+      createEvent: async (a) => {
+        try {
+          const { title, description, price, date } = a.eventInput;
+          const event = new Event({
+            title,
+            description,
+            price: +price,
+            date: new Date(date),
+            creator: '603f19e6924be91c85348d12',
           });
+          const savedEvent = await event.save();
+          const user = await User.findById('603f19e6924be91c85348d12');
+          await user.createdEvents.push(savedEvent);
+          await user.save();
+          return savedEvent;
+        } catch (err) {
+          throw new Error('event not created', err);
+        }
       },
-      createUser: ({ userInput }) => {
-        return User.findOne({ email: userInput.email })
-          .then((user) => {
-            if (user) {
-              throw new Error('User exists already.');
-            }
-            return bcrypt.hash(userInput.password, 12);
-          })
-          .then((hashedPassword) => {
-            const user = new User({
-              email: userInput.email,
-              password: hashedPassword,
-            });
-            return user.save();
-          })
-          .then((result) => {
-            console.log(result);
-            result.password = null;
-            return result;
-          })
-          .catch((err) => {
-            throw err;
-          });
+      createUser: async (a) => {
+        const { email, password } = a.userInput;
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+          throw new Error('User already exists');
+        }
+        const user = new User({
+          email,
+          password: hashSync(password, 10),
+        });
+        const res = await user.save();
+        res.password = null;
+        return res;
       },
     },
     graphiql: true,
