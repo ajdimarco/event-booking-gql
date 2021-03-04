@@ -22,12 +22,14 @@ app.use(
         description: String!
         price: Float!
         date: String!
+        creator: User!
       }
 
       type User {
         _id: ID!
         email: String!
         password: String
+        createdEvents: [Event!]
       }
 
       input EventInput {
@@ -57,15 +59,7 @@ app.use(
       }
     `),
     rootValue: {
-      events: () => {
-        return Event.find()
-          .then((events) => {
-            return events;
-          })
-          .catch((err) => {
-            throw err;
-          });
-      },
+      events: () => Event.find(),
       createEvent: async (a) => {
         try {
           const { title, description, price, date } = a.eventInput;
@@ -106,7 +100,8 @@ app.use(
 
 mongoose
   .connect(
-    `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.11gxn.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority`
+    `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.11gxn.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority`,
+    { useNewUrlParser: true, useUnifiedTopology: true }
   )
   .then(() => {
     app.listen(3000);
