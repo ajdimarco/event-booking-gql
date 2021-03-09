@@ -2,6 +2,7 @@ const { hashSync } = require('bcryptjs');
 
 const Event = require('../../models/event');
 const User = require('../../models/user');
+const Booking = require('../../models/booking');
 
 module.exports = {
   events: async () => {
@@ -10,6 +11,17 @@ module.exports = {
       const eventObj = event.toObject();
       return {...eventObj, date: new Date(eventObj.date).toISOString()};
     });
+  },
+  bookings: async () => {
+    const bookings = await Booking.find();
+    return bookings.map(booking => {
+      const bookingObj = booking.toObject();
+      return {
+        ...bookingObj,
+        createdAt: new Date(bookingObj.createdAt).toISOString(),
+        updatedAt: new Date(bookingObj.updatedAt).toISOString()
+      }
+    })
   },
   createEvent: async (a) => {
     try {
@@ -47,4 +59,23 @@ module.exports = {
     res.password = null;
     return res;
   },
+  bookEvent: async a => {
+    const fetchedEvent = await Event.findOne({_id: a.eventId});
+    const booking = new Booking({
+      user: '603f19e6924be91c85348d12',
+      event: fetchedEvent
+    });
+    const result = await booking.save();
+    const resultObj = result.toObject();
+    return {
+      ...resultObj,
+      createdAt: new Date(resultObj.createdAt).toISOString(),
+      updatedAt: new Date(resultObj.updatedAt).toISOString()
+    }
+  },
+  cancelBooking: async a => {
+    const fetchedBooking = await Booking.findById(a.bookingId);
+    await Booking.deleteOne({_id: a.bookingId});    
+    return fetchedBooking.event;
+  }
 };
