@@ -23,7 +23,7 @@ const eventSchema = new Schema({
   creator: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    autopopulate: { select: '_id email createdEvents'}
+    autopopulate: { select: '_id email createdEvents' }
   }
 });
 eventSchema.plugin(autopopulate);
