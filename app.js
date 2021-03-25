@@ -4,12 +4,15 @@ const { graphqlHTTP } = require('express-graphql');
 const mongoose = require('mongoose');
 const graphQLSchema = require('./graphql/schema/index');
 const graphQLResolvers = require('./graphql/resolvers/index');
+const isAuth = require('./middleware/is-auth');
 
 const app = express();
 
 const PORT = process.env.PORT || 4000;
 
 app.use(bodyParser.json());
+
+app.use(isAuth);
 
 app.use(
   '/graphql',
